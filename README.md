@@ -1,7 +1,7 @@
 # MCLogalyzer #
 
 This is a small Python script to analyze your Minecraft server log file and to
-generate some nice statistics as HTML-File.
+generate some nice statistics as HTML-File. This was forked from m0r13. I modified this project to work with Python 3.4. Changes consist of fixing syntax for Print function and fixing conversions of bytes into strings.
 
 <div align="center">
     <a href="http://mclogalyzer.mapcrafter.org/example"><img src="http://i.imgur.com/GkKY9T6.png" /></a>
