@@ -376,7 +376,7 @@ def parse_logs(logdir, since=None, whitelist_users=None):
                 else:
                     username = grep_kick_username(line)
 
-                if not username or username.startswith("/"):
+                if not username or username.decode().startswith("/"):
                     continue
                 if username not in users:
                     continue
@@ -427,7 +427,7 @@ def parse_logs(logdir, since=None, whitelist_users=None):
             if username not in users:
                 users[username] = UserStats(username)
 
-    users = users.values()
+    users = list(users.values())
     users.sort(key=lambda user: user.time, reverse=True)
 
     server._statistics_since = since if since is not None else first_date
