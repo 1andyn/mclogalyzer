@@ -242,7 +242,7 @@ def grep_logname_date(line):
 
 def grep_log_datetime(date, line):
     try:
-        d = time.strptime(line.split(" ")[0], "[%H:%M:%S]")
+        d = time.strptime(line.decode(encoding='UTF-8').split(" ")[0], "[%H:%M:%S]")
     except ValueError:
         return None
     return datetime.datetime(
@@ -252,49 +252,49 @@ def grep_log_datetime(date, line):
 
 
 def grep_login_username(line):
-    search = REGEX_LOGIN_USERNAME.search(line)
+    search = REGEX_LOGIN_USERNAME.search(line.decode(encoding='UTF-8'))
     if not search:
-        print ("### Warning: Unable to find login username:", line)
+        print ("### Warning: Unable to find login username:", line.decode(encoding='UTF-8'))
         return ""
     username = search.group(1).lstrip().rstrip()
-    return username.decode("ascii", "ignore").encode("ascii", "ignore")
+    return username.encode("ascii", "ignore")
 
 
 def grep_logout_username(line):
-    search = REGEX_LOGOUT_USERNAME.search(line)
+    byte_string = line.decode(encoding='UTF-8')
+    search = REGEX_LOGOUT_USERNAME.search(byte_string)
     if not search:
-        search = REGEX_LOGOUT_USERNAME2.search(line)
+        search = REGEX_LOGOUT_USERNAME2.search(byte_string)
         if not search:
-            print ("### Warning: Unable to find username:", line)
+            print ("### Warning: Unable to find username:", byte_string)
             return ""
     username = search.group(1).lstrip().rstrip()
-    return username.decode("ascii", "ignore").encode("ascii", "ignore")
+    return username.encode("ascii", "ignore")
 
 
 def grep_kick_username(line):
-    search = REGEX_KICK_USERNAME.search(line)
+    search = REGEX_KICK_USERNAME.search(line.decode(encoding='UTF-8'))
     if not search:
-        print ("### Warning: Unable to find kick logout username:", line)
+        print ("### Warning: Unable to find kick logout username:", line.decode(encoding='UTF-8'))
         return ""
-    return search.group(1)[:-1].decode("ascii", "ignore").encode("ascii", "ignore")
+    return search.group(1)[:-1].encode("ascii", "ignore")
 
 
 def grep_death(line):
     for regex in REGEX_DEATH_MESSAGES:
-        buff_string = line.decode(encoding='UTF-8')
-        search = regex.search(line)
+        search = regex.search(line.decode(encoding='UTF-8'))
         if search:
             return search.group(1), capitalize_first(search.group(2))
     return None, None
 
 
 def grep_achievement(line):
-    search = REGEX_ACHIEVEMENT.search(line)
+    search = REGEX_ACHIEVEMENT.search(line.decode(encoding='UTF-8'))
     if not search:
-        print ("### Warning: Unable to find achievement username or achievement:", line)
+        print ("### Warning: Unable to find achievement username or achievement:", line.decode(encoding='UTF-8'))
         return None, None
     username = search.group(1)
-    return username.decode("ascii", "ignore").encode("ascii", "ignore"), search.group(2)
+    return username.encode("ascii", "ignore"), search.group(2)
 
 
 def format_delta(timedelta, days=True, maybe_years=False):
@@ -415,7 +415,7 @@ def parse_logs(logdir, since=None, whitelist_users=None):
                             death_user._death_types[death_type] = 0
                         death_user._death_types[death_type] += 1
                 else:
-                    search = REGEX_CHAT_USERNAME.search(line)
+                    search = REGEX_CHAT_USERNAME.search(line.decode(encoding='UTF-8'))
                     if not search:
                         continue
                     username = search.group(2)
