@@ -242,7 +242,7 @@ def grep_logname_date(line):
 
 def grep_log_datetime(date, line):
     try:
-        d = time.strptime(line.decode(encoding='UTF-8').split(" ")[0], "[%H:%M:%S]")
+        d = time.strptime(line.split(" ")[0], "[%H:%M:%S]")
     except ValueError:
         return None
     return datetime.datetime(
@@ -252,49 +252,48 @@ def grep_log_datetime(date, line):
 
 
 def grep_login_username(line):
-    search = REGEX_LOGIN_USERNAME.search(line.decode(encoding='UTF-8'))
+    search = REGEX_LOGIN_USERNAME.search(line)
     if not search:
         print ("### Warning: Unable to find login username:", line.decode(encoding='UTF-8'))
         return ""
     username = search.group(1).lstrip().rstrip()
-    return username.encode("ascii", "ignore")
+    return username
 
 
 def grep_logout_username(line):
-    byte_string = line.decode(encoding='UTF-8')
-    search = REGEX_LOGOUT_USERNAME.search(byte_string)
+    search = REGEX_LOGOUT_USERNAME.search(line)
     if not search:
-        search = REGEX_LOGOUT_USERNAME2.search(byte_string)
+        search = REGEX_LOGOUT_USERNAME2.search(line)
         if not search:
-            print ("### Warning: Unable to find username:", byte_string)
+            print ("### Warning: Unable to find username:", line)
             return ""
     username = search.group(1).lstrip().rstrip()
-    return username.encode("ascii", "ignore")
+    return username
 
 
 def grep_kick_username(line):
-    search = REGEX_KICK_USERNAME.search(line.decode(encoding='UTF-8'))
+    search = REGEX_KICK_USERNAME.search(line)
     if not search:
-        print ("### Warning: Unable to find kick logout username:", line.decode(encoding='UTF-8'))
+        print ("### Warning: Unable to find kick logout username:", line)
         return ""
-    return search.group(1)[:-1].encode("ascii", "ignore")
+    return search.group(1)[:-1]
 
 
 def grep_death(line):
     for regex in REGEX_DEATH_MESSAGES:
-        search = regex.search(line.decode(encoding='UTF-8'))
+        search = regex.search(line)
         if search:
             return search.group(1), capitalize_first(search.group(2))
     return None, None
 
 
 def grep_achievement(line):
-    search = REGEX_ACHIEVEMENT.search(line.decode(encoding='UTF-8'))
+    search = REGEX_ACHIEVEMENT.search(line)
     if not search:
-        print ("### Warning: Unable to find achievement username or achievement:", line.decode(encoding='UTF-8'))
+        print ("### Warning: Unable to find achievement username or achievement:", line)
         return None, None
     username = search.group(1)
-    return username.encode("ascii", "ignore"), search.group(2)
+    return username, search.group(2)
 
 
 def format_delta(timedelta, days=True, maybe_years=False):
@@ -342,11 +341,11 @@ def parse_logs(logdir, since=None, whitelist_users=None):
             buff_string = line.decode(encoding='UTF-8')
 
             if "logged in with entity id" in buff_string:
-                date = grep_log_datetime(today, line)
+                date = grep_log_datetime(today, buff_string)
                 if date is None or (since is not None and date < since):
                     continue
 
-                username = grep_login_username(line)
+                username = grep_login_username(buff_string)
                 if not username:
                     continue
 
@@ -366,17 +365,17 @@ def parse_logs(logdir, since=None, whitelist_users=None):
                         server._max_players_date = date
 
             elif "lost connection" in buff_string or "[INFO] CONSOLE: Kicked player" in buff_string:
-                date = grep_log_datetime(today, line)
+                date = grep_log_datetime(today, buff_string)
                 if date is None or (since is not None and date < since):
                     continue
 
                 username = ""
                 if "lost connection" in buff_string:
-                    username = grep_logout_username(line)
+                    username = grep_logout_username(buff_string)
                 else:
-                    username = grep_kick_username(line)
+                    username = grep_kick_username(buff_string)
 
-                if not username or username.decode().startswith("/"):
+                if not username or username.startswith("/"):
                     continue
                 if username not in users:
                     continue
@@ -388,7 +387,7 @@ def parse_logs(logdir, since=None, whitelist_users=None):
                     online_players.remove(username)
 
             elif "[INFO] Stopping server" in buff_string:
-                date = grep_log_datetime(today, line)
+                date = grep_log_datetime(today, buff_string)
                 if date is None or (since is not None and date < since):
                     continue
 
@@ -397,15 +396,15 @@ def parse_logs(logdir, since=None, whitelist_users=None):
                 online_players = set()
 
             elif "earned the achievement" in buff_string:
-                achievement_username, achievement = grep_achievement(line)
+                achievement_username, achievement = grep_achievement(buff_string)
                 if achievement_username is not None:
                     if achievement_username in users:
                         achievement_user = users[achievement_username]
                         achievement_user._achievement_count += 1
                         achievement_user._achievements.append(achievement)
             else:
-                death_username, death_type = grep_death(line)
-                death_time = grep_log_datetime(today, line)
+                death_username, death_type = grep_death(buff_string)
+                death_time = grep_log_datetime(today, buff_string)
                 if death_username is not None:
                     if death_username in users:
                         death_user = users[death_username]
